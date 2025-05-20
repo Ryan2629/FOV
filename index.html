@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>FOV Fit Checker</title>
+  <style>
+    body { font-family: sans-serif; }
+    canvas { border: 1px solid #ccc; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>FOV Fit Checker</h1>
+  <label>FOV Width (mm): <input id="fovW" type="number" value="200"></label>
+  <label>FOV Height (mm): <input id="fovH" type="number" value="150"></label><br>
+  <label>Subject Width (mm): <input id="subW" type="number" value="180"></label>
+  <label>Subject Height (mm): <input id="subH" type="number" value="140"></label><br>
+  <label>X Offset (mm): <input id="offX" type="number" value="0"></label>
+  <label>Y Offset (mm): <input id="offY" type="number" value="0"></label><br>
+  <p id="status"></p>
+  <canvas id="canvas" width="600" height="450"></canvas>
+
+  <script>
+    const inputs = ["fovW","fovH","subW","subH","offX","offY"].map(id => document.getElementById(id));
+    const status = document.getElementById("status");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    function draw() {
+      // Read values
+      const [fovW,fovH,subW,subH,offX,offY] = inputs.map(i => parseFloat(i.value));
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      // Scale mm to pixels
+      const scale = Math.min(canvas.width / fovW, canvas.height / fovH) * 0.9;
+      const cx = canvas.width/2, cy = canvas.height/2;
+
+      // Draw FOV
+      ctx.strokeStyle = 'blue';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cx - fovW/2*scale, cy - fovH/2*scale,
+                     fovW*scale, fovH*scale);
+
+      // Draw Subject
+      const sx = cx + offX*scale - subW/2*scale;
+      const sy = cy - offY*scale - subH/2*scale;
+      ctx.strokeStyle = 'red';
+      ctx.strokeRect(sx, sy, subW*scale, subH*scale);
+
+      // Fit check
+      const inside = (sx >= cx - fovW/2*scale &&
+                      sy >= cy - fovH/2*scale &&
+                      sx + subW*scale <= cx + fovW/2*scale &&
+                      sy + subH*scale <= cy + fovH/2*scale);
+      status.textContent = inside ? "✔️ Fits within FOV" : "❌ Exceeds FOV";
+    }
+
+    inputs.forEach(i => i.addEventListener('input', draw));
+    draw();
+  </script>
+</body>
+</html>
